@@ -1,6 +1,6 @@
 package pkg
 
 const (
-	TraceIDKey      = "TraceID"
-	TracedLoggerKey = "TracedLogger"
+	TraceIDKey      = "traceID"
+	TracedLoggerKey = "tracedLogger"
 )
