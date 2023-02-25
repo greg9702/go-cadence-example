@@ -16,8 +16,9 @@ func LoggingMiddleware(logger log.Logger) endpoint.Middleware {
 			startTime := time.Now().UnixMilli()
 
 			traceID := uuid.New()
-			logger = log.With(logger, pkg.TraceIDKey, traceID)
-			ctx = context.WithValue(ctx, pkg.TracedLoggerKey, logger)
+
+			tracedLogger := log.With(logger, pkg.TraceIDKey, traceID)
+			ctx = context.WithValue(ctx, pkg.TracedLoggerKey, tracedLogger)
 
 			defer func() {
 				endTime := time.Now().UnixMilli()
