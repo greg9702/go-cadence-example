@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"orders/dao"
 	"os"
 
 	"orders/order"
@@ -14,7 +15,9 @@ func main() {
 	logger = log.NewLogfmtLogger(os.Stderr)
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "listen", "8082", "caller", log.DefaultCaller)
 
-	r := order.NewHttpServer(order.NewService(), logger)
+	orderDAO := dao.NewOrderDAO()
+
+	r := order.NewHttpServer(order.NewService(orderDAO), logger)
 
 	logger.Log("msg", "HTTP", "addr", "8082")
 	logger.Log("err", http.ListenAndServe(":8082", r))
