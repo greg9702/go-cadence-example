@@ -11,6 +11,7 @@ import (
 type OrderDAO interface {
 	CreateOrder(ctx context.Context, totalCost uint32, vehicleNo string) (string, error)
 	GetOrder(ctx context.Context, id string) (*Order, error)
+	UpdateOrderStatus(ctx context.Context, id string, newStatus OrderStatus) error
 }
 
 func NewOrderDAO() OrderDAO {
@@ -49,6 +50,22 @@ func (o *orderInMemory) GetOrder(ctx context.Context, id string) (*Order, error)
 	log.Log("msg", "order not found", "id", id)
 
 	return nil, &errors.ServiceError{
+		Code:    http.StatusNotFound,
+		Message: "order not found",
+	}
+}
+
+func (o *orderInMemory) UpdateOrderStatus(ctx context.Context, id string, newStatus OrderStatus) error {
+	log := logger.GetTracedLog(ctx)
+
+	if _, ok := o.data[id]; ok {
+		o.data[id].Status = newStatus
+		log.Log("msg", "updated order status", "id", id, "status", newStatus)
+		return nil
+	}
+	log.Log("msg", "order not found", "id", id)
+
+	return &errors.ServiceError{
 		Code:    http.StatusNotFound,
 		Message: "order not found",
 	}

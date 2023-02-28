@@ -10,6 +10,6 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 COPY --from=builder /app ./
 
-EXPOSE 8082
+EXPOSE 8081
 
 ENTRYPOINT ["./app"]
