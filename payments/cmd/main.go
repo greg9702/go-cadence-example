@@ -30,6 +30,8 @@ func main() {
 	var c client.CadenceAdapter
 	c.Setup(config)
 
+	r := mux.NewRouter()
+
 
 	workerOptions := worker.Options{
 		FeatureFlags: uc.FeatureFlags{
@@ -37,13 +39,12 @@ func main() {
 		},
 	}
 
-	w := worker.New(c.ServiceClient, config.Domain, "order", workerOptions)
+	w := worker.New(c.ServiceClient, config.Domain, "payment", workerOptions)
 	w.RegisterActivity(processPayment)
 
 	w.Start()
 
 
-	r := mux.NewRouter()
 
 	logger.Log("msg", "HTTP", "addr", "8081")
 	logger.Log("err", http.ListenAndServe(":8081", r))
@@ -51,6 +52,6 @@ func main() {
 
 func processPayment(ctx context.Context) (string, error) {
 	fmt.Println(fmt.Sprintf("process payment activity trigerred"))
-	return "foo", nil
+	return "payment", nil
 }
 
