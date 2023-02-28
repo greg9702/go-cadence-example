@@ -1,20 +1,65 @@
 package client
 
 import (
+	"context"
+
 	"github.com/greg9702/go-cadence-example/pkg/cadence"
 	"github.com/greg9702/go-cadence-example/pkg/cadence/builder"
+	"github.com/uber-go/tally"
+	"go.uber.org/cadence/.gen/go/cadence/workflowserviceclient"
 	"go.uber.org/cadence/client"
+	"go.uber.org/cadence/encoded"
+	"go.uber.org/cadence/workflow"
 	"go.uber.org/zap"
 )
 
-
-func SetupClient(config *cadence.CadenceConfig) (client.Client, error) {
-	logger, _ := zap.NewDevelopment()
-	b := builder.NewBuilder(logger, config.HostPort, config.Domain)
-	client, err := b.BuildCadenceClient()
-	if err != nil {
-		return nil, err
+type (
+	// Adapter class for workflow helper.
+	CadenceAdapter struct {
+		CadenceClient  client.Client
+		ServiceClient  workflowserviceclient.Interface
+		Scope          tally.Scope
+		Logger         *zap.Logger
+		Config         cadence.CadenceConfig
+		Builder        *builder.WorkflowClientBuilder
+		DataConverter  encoded.DataConverter
+		CtxPropagators []workflow.ContextPropagator
 	}
+)
 
-	return client, nil
+// Setup setup the config for the code run
+func (h *CadenceAdapter) Setup(config *cadence.CadenceConfig) {
+	if h.CadenceClient != nil {
+		return
+	}
+	logger, _ := zap.NewDevelopment()
+	h.Logger = logger
+	h.Config = *config
+
+	hostPort := h.Config.HostPort
+	domainName := h.Config.Domain
+
+	h.Builder = builder.NewBuilder(logger, hostPort, domainName)
+
+	// Cadence client used to perform CRUD operation.
+	cadenceClient, err := h.Builder.BuildCadenceClient()
+	if err != nil {
+		panic(err)
+	}
+	h.CadenceClient = cadenceClient
+
+	// Service client that communicates with cadence using the rpc.
+	serviceClient, err := h.Builder.BuildServiceClient()
+	if err != nil {
+		panic(err)
+	}
+	h.ServiceClient = serviceClient
+
+	domainClient, _ := h.Builder.BuildCadenceDomainClient()
+	_, err = domainClient.Describe(context.Background(), domainName)
+	if err != nil {
+		logger.Info("Domain doesn't exist", zap.String("Domain", domainName), zap.String("HostPort", hostPort), zap.Error(err))
+	} else {
+		logger.Info("Domain successfully registered.", zap.String("Domain", domainName), zap.String("HostPort", hostPort))
+	}
 }
