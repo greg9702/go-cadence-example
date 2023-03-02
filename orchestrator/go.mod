@@ -1,4 +1,4 @@
-module go-cadence-example/orchestrator
+module orchestrator
 
 go 1.20
 

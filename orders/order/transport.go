@@ -3,19 +3,25 @@ package order
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+
+	"github.com/greg9702/go-cadence-example/pkg/cadence"
+	"github.com/greg9702/go-cadence-example/pkg/cadence/client"
 	"github.com/greg9702/go-cadence-example/pkg/encoder"
 	"github.com/greg9702/go-cadence-example/pkg/errors"
 	"github.com/greg9702/go-cadence-example/pkg/middleware"
-	"net/http"
+	"go.uber.org/cadence/worker"
 
 	"github.com/go-kit/kit/endpoint"
 
 	kitlog "github.com/go-kit/kit/log"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
+
+	uc "go.uber.org/cadence/client"
 )
 
-func NewHttpServer(svc Service, logger kitlog.Logger) *mux.Router {
+func NewHttpServer(svc Service, client *client.CadenceAdapter, logger kitlog.Logger) *mux.Router {
 	options := []kithttp.ServerOption{
 		kithttp.ServerErrorHandler(encoder.NewLogErrorHandler(logger)),
 		kithttp.ServerErrorEncoder(encoder.ErrorEncoder(logger)),
@@ -49,6 +55,21 @@ func NewHttpServer(svc Service, logger kitlog.Logger) *mux.Router {
 
 	return r
 }
+
+func NewCadenceWorker(svc Service, client *client.CadenceAdapter, config *cadence.CadenceConfig, logger kitlog.Logger) worker.Worker {
+	workerOptions := worker.Options{
+		FeatureFlags: uc.FeatureFlags{
+			WorkflowExecutionAlreadyCompletedErrorEnabled: true,
+		},
+	}
+
+	w := worker.New(client.ServiceClient, config.Domain, "order", workerOptions)
+	w.RegisterActivity(svc.ApproveOrder)
+	w.RegisterActivity(svc.RejectOrder)
+
+	return w
+}
+
 
 func decodeCreateOrderRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	var request createOrderRequest

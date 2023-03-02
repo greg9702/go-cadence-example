@@ -2,12 +2,12 @@ package order
 
 import (
 	"context"
-	"fmt"
 	"orders/dao"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/greg9702/go-cadence-example/pkg/cadence/client"
+	"github.com/greg9702/go-cadence-example/pkg/logger"
 	uc "go.uber.org/cadence/client"
 )
 
@@ -20,17 +20,24 @@ type Service interface {
 
 type service struct {
 	dao dao.OrderDAO
-	client client.CadenceAdapter
+	client *client.CadenceAdapter
 }
 
-func NewService(dao dao.OrderDAO, c client.CadenceAdapter) Service {
+func NewService(dao dao.OrderDAO, client *client.CadenceAdapter) Service {
 	return &service{
 		dao: dao,
-		client: c,
+		client: client,
 	}
 }
 
 func (s *service) CreateOrder(ctx context.Context, totalCost uint32, vehicleNo string) (string, error) {
+	log := logger.GetTracedLog(ctx)
+
+	id, err := s.dao.CreateOrder(ctx, totalCost, vehicleNo)
+	if err != nil {
+		return "", err
+	}
+
 	workflowOptions := uc.StartWorkflowOptions{
 		ID:                              "createOrder_" + uuid.New().String(),
 		TaskList:                        "order",
@@ -38,19 +45,14 @@ func (s *service) CreateOrder(ctx context.Context, totalCost uint32, vehicleNo s
 		DecisionTaskStartToCloseTimeout: time.Minute,
 	}
 
-	fmt.Println("Starting createOrder workflow")
-	resp, err := s.client.CadenceClient.StartWorkflow(ctx, workflowOptions, "main.CreateOrderWorkflow")
+	resp, err := s.client.CadenceClient.StartWorkflow(ctx, workflowOptions, "orchestrator/order.CreateOrderWorkflow", id, totalCost)
 	if err != nil {
-		fmt.Println("XDDDDD ERRR", err)
+		return "", err
 	}
-	fmt.Println(resp)
-	return "", nil
+	log.Log("msg", "started workflow", "id", resp.ID, "runID", resp.RunID)
 
-	// id, err := s.dao.CreateOrder(ctx, totalCost, vehicleNo)
-	// if err != nil {
-	// 	return "", err
-	// }
-	// return id, nil
+
+	return id, nil
 }
 
 func (s *service) GetOrder(ctx context.Context, id string) (*dao.Order, error) {

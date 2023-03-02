@@ -19,10 +19,15 @@ type createOrderResponse struct {
 func makeCreateOrderEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createOrderRequest)
+
 		id, err := svc.CreateOrder(ctx, req.TotalCost, req.VehicleNo)
+		if err != nil {
+			return nil, err
+		}
+	
 		return createOrderResponse{
 			ID: id,
-		}, err
+		}, nil
 	}
 }
 

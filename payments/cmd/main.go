@@ -2,14 +2,11 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"payments/payment"
-
-	"github.com/gorilla/mux"
-	uc "go.uber.org/cadence/client"
-	"go.uber.org/cadence/worker"
 
 	"github.com/greg9702/go-cadence-example/pkg/cadence"
 	"github.com/greg9702/go-cadence-example/pkg/cadence/client"
@@ -25,22 +22,16 @@ func main() {
 	_ = payment.NewService()
 
 
+
 	config := cadence.SetupConfig("../config/development.yaml")
 
 	var c client.CadenceAdapter
 	c.Setup(config)
 
-	r := mux.NewRouter()
+	svc := payment.NewService()
 
-
-	workerOptions := worker.Options{
-		FeatureFlags: uc.FeatureFlags{
-			WorkflowExecutionAlreadyCompletedErrorEnabled: true,
-		},
-	}
-
-	w := worker.New(c.ServiceClient, config.Domain, "payment", workerOptions)
-	w.RegisterActivity(processPayment)
+	r := payment.NewHttpServer(svc, &c, logger)
+	w := payment.NewCadenceWorker(svc, &c, config, logger)
 
 	w.Start()
 
@@ -52,6 +43,6 @@ func main() {
 
 func processPayment(ctx context.Context) (string, error) {
 	fmt.Println(fmt.Sprintf("process payment activity trigerred"))
-	return "payment", nil
+	return "payment", errors.New("foo")
 }
 

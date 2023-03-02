@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"os"
-	"time"
+
+	"orchestrator/order"
 
 	"github.com/go-kit/kit/log"
 	"github.com/gorilla/mux"
@@ -12,8 +12,6 @@ import (
 	"github.com/greg9702/go-cadence-example/pkg/cadence/client"
 	uc "go.uber.org/cadence/client"
 	"go.uber.org/cadence/worker"
-	"go.uber.org/cadence/workflow"
-	"go.uber.org/zap"
 )
 
 func main() {
@@ -35,7 +33,7 @@ func main() {
 	}
 
 	w := worker.New(c.ServiceClient, config.Domain, "order", workerOptions)
-	w.RegisterWorkflow(CreateOrderWorkflow)
+	w.RegisterWorkflow(order.CreateOrderWorkflow)
 
 	w.Start()
 
@@ -43,37 +41,4 @@ func main() {
 	logger.Log("err", http.ListenAndServe(":8083", r))
 }
 
-func CreateOrderWorkflow(ctx workflow.Context) (string, error) {
-	logger := workflow.GetLogger(ctx)
-	logger.Info("helloworld workflow started")
 
-	fmt.Println("Starting workflow")
-	ao := workflow.ActivityOptions{
-		ScheduleToStartTimeout: time.Minute,
-		StartToCloseTimeout:    time.Minute,
-		HeartbeatTimeout:       time.Second * 20,
-		TaskList: "order",
-	}
-	ctx = workflow.WithActivityOptions(ctx, ao)
-	var order string
-	err := workflow.ExecuteActivity(ctx, "main.createOrder").Get(ctx, &order)
-	if err != nil {
-		logger.Error("Activity failed.", zap.Error(err))
-		return "", err
-	}
-
-	ao = workflow.ActivityOptions{
-		ScheduleToStartTimeout: time.Minute,
-		StartToCloseTimeout:    time.Minute,
-		HeartbeatTimeout:       time.Second * 20,
-		TaskList: "payment",
-	}
-	ctx = workflow.WithActivityOptions(ctx, ao)
-	var payment string
-	err = workflow.ExecuteActivity(ctx, "main.processPayment").Get(ctx, &payment)
-	if err != nil {
-		logger.Error("Activity failed.", zap.Error(err))
-		return "", err
-	}
-	return fmt.Sprintf("%s-%s", order, payment), nil
-}

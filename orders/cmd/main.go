@@ -1,8 +1,6 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 	"orders/dao"
 	"os"
@@ -12,8 +10,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/greg9702/go-cadence-example/pkg/cadence"
 	"github.com/greg9702/go-cadence-example/pkg/cadence/client"
-	uc "go.uber.org/cadence/client"
-	"go.uber.org/cadence/worker"
 )
 
 func main() {
@@ -21,24 +17,17 @@ func main() {
 	logger = log.NewLogfmtLogger(os.Stderr)
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "listen", "8082", "caller", log.DefaultCaller)
 
-	orderDAO := dao.NewOrderDAO()
 
 	config := cadence.SetupConfig("../config/development.yaml")
 
 	var c client.CadenceAdapter
 	c.Setup(config)
 
-	r := order.NewHttpServer(order.NewService(orderDAO, c), logger)
+	orderDAO := dao.NewOrderDAO()
+	svc := order.NewService(orderDAO, &c)
 
-
-	workerOptions := worker.Options{
-		FeatureFlags: uc.FeatureFlags{
-			WorkflowExecutionAlreadyCompletedErrorEnabled: true,
-		},
-	}
-
-	w := worker.New(c.ServiceClient, config.Domain, "order", workerOptions)
-	w.RegisterActivity(createOrder)
+	r := order.NewHttpServer(svc, &c, logger)
+	w := order.NewCadenceWorker(svc, &c, config, logger)
 
 	w.Start()
 
@@ -47,7 +36,4 @@ func main() {
 }
 
 
-func createOrder(ctx context.Context) (string, error) {
-	fmt.Println(fmt.Sprintf("order created"))
-	return "order", nil
-}
+
