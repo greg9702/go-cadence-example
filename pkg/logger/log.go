@@ -2,6 +2,7 @@ package logger
 
 import (
 	"context"
+	"os"
 
 	"github.com/go-kit/log"
 	"github.com/google/uuid"
@@ -13,7 +14,8 @@ func GetTracedLog(ctx context.Context) log.Logger {
 	if !ok {
 		traceID := uuid.New()
 
-		tracedLogger := log.With(logger, pkg.TraceIDKey, traceID)
+		tracedLogger := log.NewLogfmtLogger(os.Stderr)
+		tracedLogger = log.With(tracedLogger, pkg.TraceIDKey, traceID)
 		newCtx := context.WithValue(ctx, pkg.TracedLoggerKey, tracedLogger)
 		ctx = newCtx
 
