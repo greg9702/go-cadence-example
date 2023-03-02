@@ -3,11 +3,12 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/log"
 	"github.com/google/uuid"
 	"github.com/greg9702/go-cadence-example/pkg"
-	"time"
 )
 
 func LoggingMiddleware(logger log.Logger) endpoint.Middleware {
@@ -28,3 +29,6 @@ func LoggingMiddleware(logger log.Logger) endpoint.Middleware {
 		}
 	}
 }
+
+
+
