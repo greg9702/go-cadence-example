@@ -16,8 +16,6 @@ func GetTracedLog(ctx context.Context) log.Logger {
 
 		tracedLogger := log.NewLogfmtLogger(os.Stderr)
 		tracedLogger = log.With(tracedLogger, pkg.TraceIDKey, traceID)
-		newCtx := context.WithValue(ctx, pkg.TracedLoggerKey, tracedLogger)
-		ctx = newCtx
 
 		return tracedLogger
 	}
