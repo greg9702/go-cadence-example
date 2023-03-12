@@ -11,6 +11,6 @@ WORKDIR /root/
 COPY --from=builder /app ./
 COPY --from=builder /app/config/development.yaml development.yaml
 
-EXPOSE 8081
+EXPOSE 8083
 
 ENTRYPOINT ["./app"]

@@ -9,6 +9,7 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 COPY --from=builder /app ./
+COPY --from=builder /app/config/development.yaml development.yaml
 
 EXPOSE 8082
 

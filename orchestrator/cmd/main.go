@@ -19,7 +19,7 @@ func main() {
 	logger = log.NewLogfmtLogger(os.Stderr)
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "listen", "8082", "caller", log.DefaultCaller)
 
-	config := cadence.SetupConfig("../config/development.yaml")
+	config := cadence.SetupConfig("development.yaml")
 
 	var c client.CadenceAdapter
 	c.Setup(config)

@@ -23,7 +23,7 @@ func main() {
 
 
 
-	config := cadence.SetupConfig("../config/development.yaml")
+	config := cadence.SetupConfig("development.yaml")
 
 	var c client.CadenceAdapter
 	c.Setup(config)

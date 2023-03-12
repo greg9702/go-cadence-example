@@ -2,12 +2,12 @@ module orchestrator
 
 go 1.20
 
-replace github.com/greg9702/go-cadence-example => ../
+// replace github.com/greg9702/go-cadence-example => ../
 
 require (
 	github.com/go-kit/kit v0.12.0
 	github.com/gorilla/mux v1.8.0
-	github.com/greg9702/go-cadence-example v0.0.0-20230228163606-33570cb6075d
+	github.com/greg9702/go-cadence-example v0.0.0-20230302195011-460be715af4a
 	go.uber.org/cadence v0.19.1
 	go.uber.org/zap v1.24.0
 )

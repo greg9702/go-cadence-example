@@ -31,26 +31,15 @@ func NewService(dao dao.OrderDAO, client *client.CadenceAdapter) Service {
 }
 
 func (s *service) CreateOrder(ctx context.Context, totalCost uint32, vehicleNo string) (string, error) {
-	log := logger.GetTracedLog(ctx)
-
 	id, err := s.dao.CreateOrder(ctx, totalCost, vehicleNo)
 	if err != nil {
 		return "", err
 	}
-
-	workflowOptions := uc.StartWorkflowOptions{
-		ID:                              "createOrder_" + uuid.New().String(),
-		TaskList:                        "order",
-		ExecutionStartToCloseTimeout:    time.Minute,
-		DecisionTaskStartToCloseTimeout: time.Minute,
-	}
-
-	resp, err := s.client.CadenceClient.StartWorkflow(ctx, workflowOptions, "orchestrator/order.CreateOrderWorkflow", id, totalCost)
+	
+	err = s.startCreateOrderWorkflow(ctx, id, totalCost)
 	if err != nil {
 		return "", err
 	}
-	log.Log("msg", "started workflow", "id", resp.ID, "runID", resp.RunID)
-
 
 	return id, nil
 }
@@ -76,5 +65,24 @@ func (s *service) RejectOrder(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (s *service) startCreateOrderWorkflow(ctx context.Context, id string, totalCost uint32) error {
+	log := logger.GetTracedLog(ctx)
+
+	workflowOptions := uc.StartWorkflowOptions{
+		ID:                              "createOrder_" + uuid.New().String(),
+		TaskList:                        "order",
+		ExecutionStartToCloseTimeout:    time.Minute,
+		DecisionTaskStartToCloseTimeout: time.Minute,
+	}
+
+	resp, err := s.client.CadenceClient.StartWorkflow(ctx, workflowOptions, "orchestrator/order.CreateOrderWorkflow", id, totalCost)
+	if err != nil {
+		return err
+	}
+
+	log.Log("msg", "started workflow", "id", resp.ID, "runID", resp.RunID)
 	return nil
 }

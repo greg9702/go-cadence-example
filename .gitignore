@@ -26,3 +26,4 @@ vendor
 .fleet
 
 data
+prometheus
