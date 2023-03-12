@@ -1,7 +1,11 @@
-# go-cadence-example
+# **go-cadence-example**
 
 go-cadence-example is a playground for testing capabilities of [candence](https://github.com/uber/cadence)
-focusing on sagas.
+focusing on using it as a saga ochestrator. 
+
+> :warning: *This project is just playground/POC. It follows lot of bad practices (including lack of 
+> interfaces, hard coded values etc.) which should  not be followed. Maybe one day I will find some time to fix*
+
 
 ## Architecture overview
 
@@ -19,6 +23,3 @@ order -> payment -> reservation
 We will use the cadence as a saga orchastrator for the communication.
 We will use the golang for services implementation, utilising the [go-kit](https://github.com/go-kit/kit)
 library.
-
-https://sultanov.dev/blog/orchestration-based-saga-using-cadence/
-https://medium.com/stashaway-engineering/building-your-first-cadence-workflow-e61a0b29785
